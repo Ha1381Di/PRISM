@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Prism — Workspace</title>
+  
+  <meta name="theme-color" content="#110F1A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: "#F7F7FB", 
+            surface: "#FFFFFF", 
+            line: "rgba(0,0,0,0.06)",
+            ink: { DEFAULT: "#1B1830", soft: "#4B5563", mute: "#9CA3AF" },
+            primary: { DEFAULT: "#7C3AED", soft: "rgba(124, 58, 237, 0.1)", deep: "#4C1D95", glow: "#A78BFA" },
+            rail: "#110F1A"
+          },
+          fontFamily: { sans: ["Inter", "sans-serif"] },
+          boxShadow: { 
+            glass: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+            pop: "0 20px 40px -12px rgba(0,0,0,0.3)" 
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      color: #1B1830;
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(-45deg, #7C2D12, #064E3B, #1E3A8A, #2E1065);
+      background-size: 400% 400%;
+      animation: luxuryGradient 20s ease infinite;
+      overflow-x: hidden;
+    }
+    
+    @keyframes luxuryGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .glass-panel { 
+      background: rgba(255, 255, 255, 0.88); 
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.6); 
+      border-radius: 20px; 
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      color: #1B1830;
+    }
+    
+    .topbar-glass {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    
+    .field { 
+      width: 100%; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); padding: 12px 16px; 
+      font-size: 14px; outline: none; background: rgba(255,255,255,0.6); transition: all 0.2s; 
+      font-family: inherit; color: #1B1830;
+    }
+    .field:focus { border-color: #7C3AED; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15); background: #FFF; }
+    .field::placeholder { color: #9CA3AF; }
+    select.field option { background: #FFF; color: #1B1830; }
+
+    .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+  </style>
+
+  <script>
+    // PWA Manifest
+    const manifest = {
+      name: 'Prism',
+      short_name: 'Prism',
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#110F1A',
+      theme_color: '#110F1A',
+      icons: [{
+        src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjN0MzQUVEIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iNjAiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiPlA8L3RleHQ+PC9zdmc+",
+        sizes: '192x192 512x512',
+        type: 'image/svg+xml'
+      }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
+
+    // Service Worker for PWA (FIXED: Skips caching Firebase requests)
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        self.addEventListener('install', (e) => { self.skipWaiting(); });
+        self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', (e) => {
+          // NEVER cache Firebase API calls
+          if (e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('firebase')) {
+            return;
+          }
+          e.respondWith(
+            caches.match(e.request).then((response) => {
+              return response || fetch(e.request).catch(() => caches.match('/'));
+            })
+          );
+        });
+      `;
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log('SW failed', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    // Import Firebase Modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+    const { useState, useEffect, useRef } = React;
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDrOr8tCE_xBoO0K39uYD4IFHNndZueE2A",
+      authDomain: "prism-786.firebaseapp.com",
+      projectId: "prism-786",
+      storageBucket: "prism-786.firebasestorage.app",
+      messagingSenderId: "273991529813",
+      appId: "1:273991529813:web:78d383524d1aa52bc1abdc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const dbFirestore = getFirestore(app);
+    const docRef = doc(dbFirestore, "prism", "main");
+
+    // --- ICONS ---
+    const Icon = ({ name, className = "w-5 h-5" }) => {
+      const icons = {
+        sparkles: <path d="M12 3l1.9 5.8 5.8 1.9-5.8 1.9L12 18.4l-1.9-5.8-5.8-1.9 5.8-1.9L12 3z"/>,
+        layout: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></>,
+        target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
+        list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
+        users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+        user: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+        chart: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,
+        activity: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>,
+        logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
+        plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+        x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+        alert: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
+        check: <polyline points="20 6 9 17 4 12"/>,
+        inbox: <><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></>,
+        menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+        search: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+        bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+        chevronRight: <polyline points="9 18 15 12 9 6"/>,
+        chevronLeft: <polyline points="15 18 9 12 15 6"/>,
+        upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,
+        download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+        mapPin: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+        link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>,
+        twitter: <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>,
+        linkedin: <><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></>
+      };
+      return <svg className={`shrink-0 ${className}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">{icons[name]}</svg>;
+    };
+
+    // --- UTILS & HELPERS ---
+    const cx = (...args) => args.filter(Boolean).join(" ");
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const addDays = (d) => { const date = new Date(); date.setDate(date.getDate() + d); return date.toISOString(); };
+    
+    const timeAgo = (iso) => {
+      const diff = Math.floor((new Date() - new Date(iso)) / 60000);
+      if (diff < 60) return `${diff}m ago`;
+      if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+      return `${Math.floor(diff/1440)}d ago`;
+    };
+    const isOverdue = (iso) => new Date(iso) < new Date() && new Date(iso).toDateString() !== new Date().toDateString();
+    const dueLabel = (iso) => {
+      if (!iso) return "No date";
+      const d = new Date(iso); const now = new Date();
+      d.setHours(0,0,0,0); now.setHours(0,0,0,0);
+      const diff = Math.round((d - now) / 86400000);
+      if (diff === 0) return "Today"; if (diff === 1) return "Tomorrow"; if (diff === -1) return "Yesterday";
+      if (diff < 0) return `${Math.abs(diff)}d late`; return `in ${diff}d`;
+    };
+
+    const priorityTone = { low: "bg-slate-100 text-slate-700", medium: "bg-sky-100 text-sky-700", high: "bg-amber-100 text-amber-800", urgent: "bg-rose-100 text-rose-700" };
+    const objectiveTone = { "on-track": "bg-emerald-100 text-emerald-700", "at-risk": "bg-amber-100 text-amber-800", "off-track": "bg-rose-100 text-rose-700", "done": "bg-violet-100 text-violet-700" };
+    const ventureTone = { planning: "bg-slate-100 text-slate-700", active: "bg-violet-100 text-violet-700", paused: "bg-amber-100 text-amber-800", done: "bg-emerald-100 text-emerald-700" };
+
+    // --- DATABASE LOGIC (Modern Firebase Modular with Optimistic UI) ---
+    const defaultDB = { users: [], ventures: [], objectives: [], actions: [], activity: [] };
+
+    function useDB() {
+      const [db, setDb] = useState(null);
+
+      useEffect(() => {
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setDb(docSnap.data());
+          } else {
+            setDoc(docRef, defaultDB);
+            setDb(defaultDB);
+          }
+        }, (error) => {
+          console.error("Firestore connection error:", error);
+        });
+
+        return () => unsubscribe();
+      }, []);
+
+      // Local state updates instantly, Firebase saves in background
+      const save = async (newDB) => {
+        setDb(newDB); // Optimistic UI update
+        try {
+          await setDoc(docRef, newDB);
+        } catch (e) {
+          console.error("Firebase Save Error:", e);
+          alert("Failed to save data. Reason: " + e.message);
+        }
+      };
+
+      return { db, save };
+    }
+
+    // --- UI COMPONENTS ---
+    const Avatar = ({ user, size = 28 }) => {
+      if (!user) return <div className="rounded-full bg-gray-200 flex items-center justify-center text-gray-400 shrink-0" style={{ width: size, height: size, fontSize: size * 0.4 }}>?</div>;
+      if (user.avatar) return <img src={user.avatar} alt={user.name} className="rounded-full object-cover shrink-0 border border-white/50 shadow-sm" style={{ width: size, height: size }} />;
+      
+      const initials = user.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+      return (
+        <div className="rounded-full flex items-center justify-center font-semibold text-white shrink-0 shadow-sm" 
+             style={{ width: size, height: size, fontSize: size * 0.38, background: `linear-gradient(135deg, #7C3AED, #4C1D95)` }} title={user.name}>
+          {initials}
+        </div>
+      );
+    };
+
+    const Badge = ({ className, children }) => <span className={cx("chip", className)}>{children}</span>;
+    
+    const EmptyState = ({ title, desc, action }) => (
+      <div className="flex flex-col items-center justify-center text-center py-12 px-4 border-2 border-dashed border-gray-300 rounded-2xl bg-white/40">
+        <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center text-primary mb-4 shadow-sm">
+          <Icon name="inbox" className="w-8 h-8" />
+        </div>
+        <p className="text-xl font-bold text-gray-800">{title}</p>
+        <p className="text-base text-gray-500 mt-2 max-w-sm">{desc}</p>
+        {action && <div className="mt-6 w-full sm:w-auto">{action}</div>}
+      </div>
+    );
+
+    const Modal = ({ open, onClose, title, children, footer }) => {
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity" onClick={onClose} />
+          <div className="relative w-full max-w-lg glass-panel p-5 sm:p-6 shadow-pop border border-white/60 transform scale-100 transition-transform max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between mb-5 sticky top-0 bg-transparent">
+              <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+              <button className="p-1.5 rounded-full hover:bg-gray-100 text-gray-600 transition-colors" onClick={onClose}><Icon name="x" className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">{children}</div>
+            {footer && <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">{footer}</div>}
+          </div>
+        </div>
+      );
+    };
+
+    // --- LAYOUT ---
+    const IconRail = ({ currentRoute, setRoute, user, onLogout, expanded, toggleExpand }) => {
+      const items = [
+        { path: "/", label: "Pulse", icon: "sparkles" },
+        { path: "/ventures", label: "Ventures", icon: "layout" },
+        { path: "/objectives", label: "Objectives", icon: "target" },
+        { path: "/actions", label: "Actions", icon: "list" },
+        { path: "/circle", label: "Circle", icon: "users" },
+        { path: "/insights", label: "Insights", icon: "chart" },
+        { path: "/stream", label: "Stream", icon: "activity" },
+      ];
+      return (
+        <aside className={cx("hidden md:flex flex-col bg-rail/95 backdrop-blur-xl py-4 gap-1 shrink-0 sidebar-transition border-r border-white/10 z-40", expanded ? "w-64" : "w-[80px]")}>
+          <div className="flex items-center justify-between px-4 mb-6 h-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-lg">P</div>
+              {expanded && <span className="font-bold text-white text-lg tracking-wide truncate">Prism</span>}
+            </div>
+            {!expanded && (
+              <button onClick={toggleExpand} className="absolute left-[68px] top-7 bg-primary hover:bg-primary-deep text-white rounded-full p-1 shadow-md z-50">
+                <Icon name="chevronRight" className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1.5">
+            {items.map(item => (
+              <button key={item.path} onClick={() => setRoute(item.path)}
+                className={cx("w-full group relative h-12 rounded-xl flex items-center px-3 transition-all duration-200", 
+                  currentRoute === item.path ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-gray-400 hover:text-white hover:bg-white/10")}>
+                <Icon name={item.icon} className="w-5 h-5" />
+                {expanded && <span className="ml-4 text-sm font-medium">{item.label}</span>}
+                {!expanded && (
+                  <span className="pointer-events-none absolute left-full ml-4 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl border border-white/10">
+                    {item.label}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="px-3 mt-auto space-y-1.5 pt-4 border-t border-white/10">
+            {expanded && (
+              <button onClick={toggleExpand} className="w-full h-12 rounded-xl flex items-center px-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                <Icon name="chevronLeft" className="w-5 h-5" />
+                <span className="ml-4 text-sm font-medium">Collapse Menu</span>
+              </button>
+            )}
+            <button onClick={onLogout} className="w-full h-12 rounded-xl flex items-center px-3 text-rose-400 hover:text-white hover:bg-rose-500/20 transition-colors">
+              <Icon name="logout" className="w-5 h-5" />
+              {expanded && <span className="ml-4 text-sm font-medium">Sign out</span>}
+            </button>
+            <div className="pt-3 pb-1 flex items-center px-3 cursor-pointer hover:bg-white/5 rounded-xl transition-colors" onClick={() => setRoute("/profile")}>
+              <Avatar user={user} size={32} />
+              {expanded && <span className="ml-3 text-sm text-white font-medium truncate">{user.name}</span>}
+            </div>
+          </div>
+        </aside>
+      );
+    };
+
+    const TopBar = ({ user, onMobileMenu, setRoute, onInstall, canInstall, db }) => {
+      const [showNotifications, setShowNotifications] = useState(false);
+      const notifRef = useRef(null);
+
+      useEffect(() => {
+        const handleClickOutside = (e) => {
+          if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+      }, []);
+
+      return (
+        <header className="sticky top-0 z-30 flex items-center gap-3 sm:gap-4 px-4 md:px-8 h-16 topbar-glass">
+          <button className="md:hidden p-2 text-gray-800 hover:bg-gray-100 rounded-lg" onClick={onMobileMenu}><Icon name="menu" /></button>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-gray-900 text-lg hidden sm:block">Prism</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2 sm:gap-4">
+            
+            {canInstall && (
+              <button onClick={onInstall} className="hidden sm:flex items-center gap-2 bg-[#7C3AED] hover:bg-[#4C1D95] text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                <Icon name="download" className="w-4 h-4" /> Install App
+              </button>
+            )}
+
+            <div className="relative" ref={notifRef}>
+              <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 rounded-full relative text-gray-700 hover:bg-gray-100 transition-colors">
+                <Icon name="bell" className="w-5 h-5" />
+                {db?.activity?.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white pointer-events-none"></span>}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-xl z-50 overflow-hidden transform origin-top-right transition-all">
+                  <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h4 className="font-bold text-gray-800">Notifications</h4>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {!db?.activity || db.activity.length === 0 ? (
+                      <div className="p-6 text-center text-sm text-gray-500 italic">No notifications yet.</div>
+                    ) : (
+                      db.activity.slice(0, 6).map(a => {
+                        const u = db.users.find(x => x.id === a.userId);
+                        return (
+                          <div key={a.id} className="p-4 border-b border-gray-50 hover:bg-gray-50/80 transition-colors flex gap-3 items-start cursor-default">
+                            <Avatar user={u} size={32} />
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm text-gray-700 leading-snug break-words">
+                                <span className="font-semibold text-gray-900">{u?.name.split(" ")[0]}</span> {a.action} <span className="font-semibold text-gray-900">{a.target}</span>
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">{timeAgo(a.createdAt)}</p>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button onClick={() => setRoute("/profile")} className="flex items-center gap-2 sm:pl-2 sm:border-l border-gray-300 hover:opacity-80 transition-opacity">
+              <Avatar user={user} size={32} />
+              <span className="hidden sm:block text-sm font-semibold text-gray-800">{user.name.split(" ")[0]}</span>
+            </button>
+          </div>
+        </header>
+      );
+    };
+
+    // --- PAGES ---
+
+    const Login = ({ onLogin, db }) => {
+      const [name, setName] = useState("");
+      const [email, setEmail] = useState("");
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!name || !email) return;
+        onLogin(name, email);
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6">
+          <div className="w-full max-w-md">
+            <div className="mb-8 sm:mb-10 text-center">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white/20 backdrop-blur-xl border border-white/40 flex items-center justify-center text-white font-bold text-3xl shadow-glass">P</div>
+              <h1 className="mt-6 text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Create your Prism Workspace</h1>
+              <p className="text-white/80 mt-2 font-medium">Enter your details to start fresh.</p>
+            </div>
+            <form onSubmit={handleSubmit} className="glass-panel p-6 sm:p-8 rounded-3xl space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+                <input className="field" placeholder="e.g. Jane Doe" value={name} onChange={e => setName(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                <input type="email" className="field" placeholder="jane@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+              </div>
+              <button type="submit" className="w-full flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#4C1D95] text-white py-3 rounded-xl font-semibold transition-colors shadow-md mt-4">
+                Enter Workspace
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    const Pulse = ({ db, user, setRoute }) => {
+      const activeVentures = db.ventures.filter(v => v.status === "active").length;
+      const activeObjectives = db.objectives.length;
+      const blocked = db.actions.filter(a => a.status === "blocked").length;
+      const completed = db.actions.filter(a => a.status === "done").length;
+      const isEmpty = db.actions.length === 0 && db.ventures.length === 0;
+
+      return (
+        <div className="space-y-6 sm:space-y-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow-md">Good day, {user.name.split(" ")[0]}.</h1>
+            <p className="text-white/90 mt-1 text-sm sm:text-base font-medium">Here's what needs your attention today.</p>
+          </div>
+
+          {isEmpty ? (
+            <div className="glass-panel p-4 sm:p-8 rounded-2xl">
+              <EmptyState title="Your workspace is empty" desc="Get started by creating your first venture." action={<button onClick={() => setRoute("/ventures")} className="btn-primary">Create a Venture</button>} />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {[
+                  { label: "Active ventures", val: activeVentures, icon: "target", bg: "bg-violet-100 text-violet-600" },
+                  { label: "Objectives", val: activeObjectives, icon: "list", bg: "bg-blue-100 text-blue-600" },
+                  { label: "Blocked actions", val: blocked, icon: "alert", bg: "bg-rose-100 text-rose-600" },
+                  { label: "Completed", val: completed, icon: "check", bg: "bg-emerald-100 text-emerald-600" }
+                ].map(stat => (
+                  <div key={stat.label} className="glass-panel p-4 sm:p-5 rounded-2xl flex items-center gap-3 sm:gap-4 hover:-translate-y-1 transition-transform duration-300">
+                    <div className={cx("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm", stat.bg)}><Icon name={stat.icon} className="w-5 h-5 sm:w-6 sm:h-6" /></div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-medium text-gray-500 truncate">{stat.label}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-gray-800">{stat.val}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+                <div className="lg:col-span-8">
+                  <div className="glass-panel p-4 sm:p-6 rounded-2xl">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <h2 className="text-base sm:text-lg font-bold text-gray-800">Focus board</h2>
+                      <button onClick={() => setRoute("/actions")} className="text-xs sm:text-sm font-semibold text-[#7C3AED] hover:text-[#4C1D95] flex items-center gap-1 transition-colors">All actions →</button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      {["in-progress", "blocked", "backlog"].map(status => {
+                        const list = db.actions.filter(a => a.status === status);
+                        return (
+                          <div key={status} className="rounded-xl bg-gray-50/50 border border-gray-200/60 p-2 sm:p-3 min-h-[150px] sm:min-h-[200px]">
+                            <div className="flex items-center justify-between px-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-500">{status.replace("-", " ")}</div>
+                            <div className="space-y-2 sm:space-y-3">
+                              {list.length === 0 && <p className="text-xs text-gray-400 text-center py-4 sm:py-6 italic">No tasks</p>}
+                              {list.map(a => {
+                                const assignee = db.users.find(u => u.id === a.assigneeId);
+                                return (
+                                  <div key={a.id} className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm hover:shadow-md transition-shadow">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 leading-snug">{a.title}</p>
+                                    <div className="flex items-center justify-between mt-2 sm:mt-3">
+                                      <Badge className={priorityTone[a.priority]}>{a.priority}</Badge>
+                                      <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <span className={cx("text-[10px] sm:text-xs font-medium", isOverdue(a.dueDate) ? "text-rose-600" : "text-gray-500")}>{dueLabel(a.dueDate)}</span>
+                                        <Avatar user={assignee} size={20} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:col-span-4 space-y-5 sm:space-y-6">
+                  <div className="glass-panel p-4 sm:p-6 rounded-2xl">
+                    <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4">Recent Stream</h2>
+                    {db.activity.length === 0 ? <p className="text-sm text-gray-500 italic">No activity yet.</p> : (
+                      <ul className="space-y-4">
+                        {db.activity.slice(0,5).map(a => {
+                          const u = db.users.find(x => x.id === a.userId);
+                          return (
+                            <li key={a.id} className="flex items-start gap-3">
+                              <Avatar user={u} size={28} />
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm text-gray-700 leading-snug break-words"><span className="font-semibold text-gray-900">{u?.name.split(" ")[0]}</span> {a.action} <span className="font-semibold text-gray-900">{a.target}</span></p>
+                                <p className="text-[10px] sm:text-xs text-gray-400 mt-1">{timeAgo(a.createdAt)}</p>
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    };
+
+    const Ventures = ({ db, user, save }) => {
+      const [open, setOpen] = useState(false);
+      const [form, setForm] = useState({ name: "", desc: "" });
+
+      const handleCreate = () => {
+        if (!form.name) return;
+        const newDB = { ...db };
+        newDB.ventures.unshift({ id: uid(), name: form.name, desc: form.desc, status: "active", leadId: user.id, createdAt: new Date().toISOString() });
+        save(newDB); setOpen(false); setForm({ name: "", desc: "" });
+      };
+
+      return (
+        <div className="space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Ventures</h1>
+              <p className="text-white/90 mt-1 text-sm sm:text-base font-medium">Your high-level projects.</p>
+            </div>
+            <button onClick={() => setOpen(true)} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#4C1D95] text-white px-5 py-2.5 rounded-xl font-semibold transition-colors shadow-md whitespace-nowrap">
+              <Icon name="plus" className="w-5 h-5" /> New venture
+            </button>
+          </div>
+          {db.ventures.length === 0 ? (
+            <div className="glass-panel p-4 sm:p-8 rounded-2xl"><EmptyState title="No ventures yet" desc="Create a venture to group your objectives and tasks." action={<button onClick={() => setOpen(true)} className="btn-outline">Create Venture</button>} /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              {db.ventures.map(v => {
+                const lead = db.users.find(u => u.id === v.leadId);
+                const objs = db.objectives.filter(o => o.ventureId === v.id);
+                const avg = objs.length ? Math.round(objs.reduce((s, o) => s + o.progress, 0) / objs.length) : 0;
+                return (
+                  <div key={v.id} className="glass-panel p-4 sm:p-6 rounded-2xl flex flex-col gap-3 sm:gap-4 hover:-translate-y-1 transition-transform duration-300">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight break-words">{v.name}</h3>
+                      <Badge className={ventureTone[v.status]}>{v.status}</Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{v.desc || "No description provided."}</p>
+                    <div className="mt-2">
+                      <div className="flex justify-between text-[10px] sm:text-xs font-semibold mb-1.5"><span className="text-gray-500">{objs.length} objectives</span><span className="text-gray-800">{avg}%</span></div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner"><div className="h-full bg-[#7C3AED] rounded-full transition-all duration-500" style={{ width: `${avg}%` }} /></div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-auto pt-3 sm:pt-4 border-t border-gray-100">
+                      <Avatar user={lead} size={24} /><span className="text-xs font-medium text-gray-600 truncate">{lead?.name}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <Modal open={open} onClose={() => setOpen(false)} title="New Venture" footer={<><button className="btn-ghost" onClick={() => setOpen(false)}>Cancel</button><button className="btn-primary" onClick={handleCreate}>Create</button></>}>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Name</label><input className="field" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Description</label><textarea className="field" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} /></div>
+          </Modal>
+        </div>
+      );
+    };
+
+    const Objectives = ({ db, save }) => {
+      const [open, setOpen] = useState(false);
+      const [form, setForm] = useState({ title: "", ventureId: "" });
+      
+      const handleCreate = () => {
+        if (!form.title || !form.ventureId) return;
+        const newDB = { ...db };
+        newDB.objectives.unshift({ id: uid(), ventureId: form.ventureId, title: form.title, progress: 0, dueDate: addDays(7), status: "on-track" });
+        save(newDB); setOpen(false); setForm({ title: "", ventureId: "" });
+      };
+
+      return (
+        <div className="space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Objectives</h1><p className="text-white/90 mt-1 text-sm sm:text-base font-medium">Measurable outcomes.</p></div>
+            <button onClick={() => setOpen(true)} disabled={db.ventures.length === 0} className="btn-primary disabled:opacity-50"><Icon name="plus" className="w-5 h-5" /> New objective</button>
+          </div>
+          {db.objectives.length === 0 ? (
+             <div className="glass-panel p-4 sm:p-8 rounded-2xl"><EmptyState title="No objectives yet" desc="Break down your ventures into measurable outcomes." /></div>
+          ) : (
+            <div className="glass-panel rounded-2xl overflow-hidden">
+              {db.objectives.map(o => (
+                <div key={o.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 p-4 sm:p-5 border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-5 w-full">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] sm:border-[4px] border-[#7C3AED] flex items-center justify-center text-[10px] sm:text-xs font-bold text-gray-800 shrink-0 bg-white shadow-inner">{o.progress}%</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{o.title}</p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{db.ventures.find(x => x.id === o.ventureId)?.name}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <Modal open={open} onClose={() => setOpen(false)} title="New Objective" footer={<><button className="btn-ghost" onClick={() => setOpen(false)}>Cancel</button><button className="btn-primary" onClick={handleCreate}>Create</button></>}>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Title</label><input className="field" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Venture</label>
+              <select className="field" value={form.ventureId} onChange={e => setForm({ ...form, ventureId: e.target.value })}>
+                <option value="">Select...</option>{db.ventures.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+              </select>
+            </div>
+          </Modal>
+        </div>
+      );
+    };
+
+    const Actions = ({ db, user, save }) => {
+      const [filter, setFilter] = useState("all");
+      const [open, setOpen] = useState(false);
+      const [form, setForm] = useState({ title: "", objectiveId: "", priority: "medium", dueDate: "" });
+      
+      const list = filter === "all" ? db.actions : db.actions.filter(a => a.status === filter);
+
+      const toggleDone = (id, current) => {
+        const newDB = { ...db };
+        const idx = newDB.actions.findIndex(a => a.id === id);
+        newDB.actions[idx].status = current === "done" ? "backlog" : "done";
+        save(newDB);
+      };
+
+      const handleCreate = () => {
+        if (!form.title || !form.objectiveId) return;
+        const newDB = { ...db };
+        newDB.actions.unshift({ id: uid(), objectiveId: form.objectiveId, title: form.title, assigneeId: user.id, priority: form.priority, status: "backlog", dueDate: form.dueDate || addDays(3), createdAt: new Date().toISOString() });
+        save(newDB); setOpen(false); setForm({ title: "", objectiveId: "", priority: "medium", dueDate: "" });
+      };
+
+      return (
+        <div className="space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Actions</h1><p className="text-white/90 mt-1 text-sm sm:text-base font-medium">Tasks to get things done.</p></div>
+            <button onClick={() => setOpen(true)} disabled={db.objectives.length === 0} className="btn-primary disabled:opacity-50"><Icon name="plus" className="w-5 h-5" /> New action</button>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            {["all", "in-progress", "blocked", "done"].map(f => (
+              <button key={f} onClick={() => setFilter(f)} className={cx("px-4 py-2 text-xs sm:text-sm font-semibold rounded-full border transition-colors whitespace-nowrap", filter === f ? "bg-[#7C3AED] text-white border-[#7C3AED] shadow-md" : "bg-white/50 border-gray-200 text-gray-600 hover:border-[#7C3AED]/50")}>
+                {f.charAt(0).toUpperCase() + f.slice(1).replace("-", " ")}
+              </button>
+            ))}
+          </div>
+          {list.length === 0 ? (
+             <div className="glass-panel p-4 sm:p-8 rounded-2xl"><EmptyState title="No actions yet" desc="Create an action to start moving work forward." /></div>
+          ) : (
+            <div className="glass-panel rounded-2xl overflow-hidden">
+              {list.map(a => (
+                <div key={a.id} className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 border-b border-gray-100 last:border-0 hover:bg-white/50 transition-colors group">
+                  <button onClick={() => toggleDone(a.id, a.status)} className={cx("w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0", a.status === "done" ? "bg-[#7C3AED] border-[#7C3AED] text-white shadow-md" : "border-gray-300 hover:border-[#7C3AED] group-hover:border-[#7C3AED]/50")}>
+                    {a.status === "done" && <Icon name="check" className="w-3 h-3 sm:w-4 sm:h-4" />}
+                  </button>
+                  <div className="flex-1 min-w-0"><p className={cx("text-sm sm:text-base font-semibold truncate transition-all", a.status === "done" ? "line-through text-gray-400" : "text-gray-800")}>{a.title}</p></div>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3">
+                    <Badge className={priorityTone[a.priority]}>{a.priority}</Badge>
+                    <span className={cx("text-[10px] sm:text-sm font-semibold sm:w-20 text-right", isOverdue(a.dueDate) && a.status !== "done" ? "text-rose-600" : "text-gray-500")}>{dueLabel(a.dueDate)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <Modal open={open} onClose={() => setOpen(false)} title="New Action" footer={<><button className="btn-ghost" onClick={() => setOpen(false)}>Cancel</button><button className="btn-primary" onClick={handleCreate}>Create</button></>}>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Title</label><input className="field" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><label className="block text-sm font-semibold text-gray-700 mb-1">Objective</label>
+              <select className="field" value={form.objectiveId} onChange={e => setForm({ ...form, objectiveId: e.target.value })}>
+                <option value="">Select...</option>{db.objectives.map(o => <option key={o.id} value={o.id}>{o.title}</option>)}
+              </select>
+            </div>
+          </Modal>
+        </div>
+      );
+    };
+
+    const Circle = ({ db, user }) => (
+      <div className="space-y-6 sm:space-y-8">
+        <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Circle</h1><p className="text-white/90 mt-1 text-sm sm:text-base font-medium">Your team members.</p></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {db.users.map(u => (
+            <div key={u.id} className="glass-panel p-4 sm:p-5 rounded-2xl flex items-center gap-3 sm:gap-4 hover:-translate-y-1 transition-transform">
+              <Avatar user={u} size={48} />
+              <div className="min-w-0">
+                <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{u.name} {u.id === user.id && <span className="text-xs text-[#7C3AED] ml-1">(You)</span>}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{u.title || "Team Member"}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const Profile = ({ user, onUpdate }) => {
+      const [form, setForm] = useState({ 
+        name: user.name, bio: user.bio || "", title: user.title || "Workspace Admin", location: user.location || "", 
+        website: user.website || "", avatar: user.avatar || "", skills: user.skills || "", twitter: user.twitter || "", linkedin: user.linkedin || ""
+      });
+      const [saved, setSaved] = useState(false);
+
+      // COMPRESS IMAGE BEFORE SAVING
+      const handleImage = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_SIZE = 200; // Resize to max 200x200
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height && width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+              } else if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+              }
+              
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              
+              // Compress to JPEG at 70% quality to guarantee it's under 1MB
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              setForm({ ...form, avatar: dataUrl });
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const handleSave = () => {
+        onUpdate(form);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      };
+
+      const skillList = form.skills ? form.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+      return (
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 pb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">My Profile</h1></div>
+            {saved && <span className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold shadow-lg animate-pulse text-sm text-center">Saved successfully!</span>}
+          </div>
+          <div className="glass-panel rounded-3xl overflow-hidden border border-white/60 shadow-xl relative">
+            <div className="h-32 sm:h-48 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 w-full"></div>
+            <div className="px-4 sm:px-8 pb-8">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6 -mt-16 sm:-mt-20 mb-6 sm:mb-8 relative z-10">
+                <div className="relative group">
+                  <div className="p-1.5 bg-white rounded-full shadow-2xl"><Avatar user={form} size={100} /></div>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity m-1.5">
+                    <Icon name="upload" className="w-6 h-6" /><input type="file" accept="image/*" className="hidden" onChange={handleImage} />
+                  </label>
+                </div>
+                <div className="flex-1 text-center sm:text-left pb-2 w-full">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 break-words">{form.name}</h2>
+                  <p className="text-gray-500 font-medium text-sm sm:text-lg mt-1 break-words">{form.title}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
+                <div><label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label><input className="field bg-white/70" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+                <div><label className="block text-sm font-bold text-gray-700 mb-2">Job Title</label><input className="field bg-white/70" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+                <div className="md:col-span-2"><label className="block text-sm font-bold text-gray-700 mb-2">Bio</label><textarea className="field bg-white/70 resize-none" rows="3" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></div>
+              </div>
+              <div className="pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-gray-200/60 flex justify-end">
+                <button onClick={handleSave} className="btn-primary">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Insights = ({ db }) => {
+      const done = db.actions.filter(a => a.status === "done").length;
+      const total = db.actions.length;
+      const pct = total ? Math.round((done/total)*100) : 0;
+      return (
+        <div className="space-y-6 sm:space-y-8">
+          <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Insights</h1></div>
+          {total === 0 ? <div className="glass-panel p-4 sm:p-8 rounded-2xl"><EmptyState title="Not enough data" desc="Complete tasks to see insights." /></div> : (
+            <div className="glass-panel p-8 sm:p-10 rounded-3xl flex flex-col items-center">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-[10px] sm:border-[12px] border-[#7C3AED] flex items-center justify-center text-3xl sm:text-4xl font-bold text-gray-800 bg-white">{pct}%</div>
+              <p className="text-lg sm:text-xl mt-6 font-bold text-gray-800 text-center">Overall Completion</p>
+              <p className="text-sm font-medium text-gray-500 mt-2 text-center">{done} out of {total} tasks</p>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const Stream = ({ db }) => (
+      <div className="space-y-6 sm:space-y-8">
+        <div><h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">Stream</h1></div>
+        {db.activity.length === 0 ? <div className="glass-panel p-4 sm:p-8 rounded-2xl"><EmptyState title="Quiet in here" desc="Activity will show up here." /></div> : (
+          <div className="glass-panel rounded-2xl overflow-hidden">
+            {db.activity.map(a => {
+              const u = db.users.find(x => x.id === a.userId);
+              return (
+                <div key={a.id} className="flex items-start sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 border-b border-gray-100 last:border-0">
+                  <Avatar user={u} size={36} />
+                  <div className="min-w-0">
+                    <p className="text-sm sm:text-base text-gray-700 break-words"><span className="font-bold text-gray-900">{u?.name || "Someone"}</span> {a.action} <span className="font-semibold text-gray-900">{a.target}</span></p>
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-1">{timeAgo(a.createdAt)}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    );
+
+    // --- MAIN APP ---
+    function App() {
+      const { db, save } = useDB();
+      const [route, setRoute] = useState("/");
+      const [user, setUser] = useState(null);
+      const [mobileMenu, setMobileMenu] = useState(false);
+      const [expanded, setExpanded] = useState(false);
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+      useEffect(() => {
+        const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+      }, []);
+
+      const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        setDeferredPrompt(null);
+      };
+
+      useEffect(() => {
+        const saved = localStorage.getItem("prism_user_id");
+        if (saved && db?.users) {
+          const currentUser = db.users.find(u => u.id === saved);
+          if (currentUser) setUser(currentUser);
+        }
+      }, [db]);
+
+      const handleLogin = (name, email) => {
+        if (!db) return;
+        let existing = db.users.find(u => u.email === email);
+        if (!existing) {
+          existing = { id: uid(), name, email, role: "admin", title: "Prism Admin", hue: Math.floor(Math.random()*360) };
+          const newDB = { ...db };
+          newDB.users.push(existing);
+          save(newDB);
+        }
+        localStorage.setItem("prism_user_id", existing.id);
+        setUser(existing);
+      };
+
+      const handleUpdateProfile = (data) => {
+        if (!db) return;
+        const newDB = { ...db };
+        const idx = newDB.users.findIndex(u => u.id === user.id);
+        newDB.users[idx] = { ...newDB.users[idx], ...data };
+        save(newDB);
+        setUser(newDB.users[idx]);
+      };
+
+      const handleLogout = () => { localStorage.removeItem("prism_user_id"); setUser(null); };
+
+      // Loading state while fetching from Firebase
+      if (!db) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-[#110F1A]">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white font-medium text-lg">Connecting to Prism...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (!user) {
+        return <Login onLogin={handleLogin} db={db} />;
+      }
+
+      return (
+        <div className="flex min-h-screen">
+          <IconRail currentRoute={route} setRoute={setRoute} user={user} onLogout={handleLogout} expanded={expanded} toggleExpand={() => setExpanded(!expanded)} />
+          
+          {mobileMenu && (
+            <div className="md:hidden fixed inset-0 z-50">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenu(false)} />
+              <div className="relative h-full w-72 bg-rail text-white p-6 shadow-2xl flex flex-col border-r border-white/10 overflow-y-auto">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-[#7C3AED] flex items-center justify-center text-white font-bold text-lg">P</div><span className="font-bold text-xl">Prism</span></div>
+                  <button onClick={() => setMobileMenu(false)} className="text-gray-400 hover:text-white"><Icon name="x" /></button>
+                </div>
+                <div className="flex-1 space-y-2">
+                  {["/", "/ventures", "/objectives", "/actions", "/circle", "/insights", "/stream"].map(r => (
+                    <button key={r} onClick={() => { setRoute(r); setMobileMenu(false); }} className={cx("w-full text-left py-3 px-4 rounded-xl text-base font-medium capitalize transition-colors", route === r ? "bg-[#7C3AED] text-white shadow-lg" : "text-gray-400 hover:text-white hover:bg-white/10")}>
+                      {r === "/" ? "Pulse" : r.replace("/", "")}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => {handleLogout(); setMobileMenu(false);}} className="mt-4 w-full text-left py-3 px-4 rounded-xl text-base font-medium text-rose-400 hover:bg-rose-500/20 transition-colors flex items-center gap-3">
+                  <Icon name="logout" /> Sign Out
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col min-w-0">
+            <TopBar user={user} onMobileMenu={() => setMobileMenu(true)} setRoute={setRoute} onInstall={handleInstallClick} canInstall={!!deferredPrompt} db={db} />
+            <main className="flex-1 px-3 sm:px-4 md:px-8 py-6 sm:py-8 max-w-[1500px] w-full mx-auto overflow-x-hidden">
+              {route === "/" && <Pulse db={db} user={user} setRoute={setRoute} />}
+              {route === "/ventures" && <Ventures db={db} user={user} save={save} />}
+              {route === "/objectives" && <Objectives db={db} save={save} />}
+              {route === "/actions" && <Actions db={db} user={user} save={save} />}
+              {route === "/circle" && <Circle db={db} user={user} />}
+              {route === "/insights" && <Insights db={db} />}
+              {route === "/stream" && <Stream db={db} />}
+              {route === "/profile" && <Profile user={user} onUpdate={handleUpdateProfile} />}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
